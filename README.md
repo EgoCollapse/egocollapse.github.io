@@ -1,4 +1,5 @@
 # egocollapse.github.io
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -247,61 +248,75 @@
 
         // Function to get the medal based on the person's MMR
         function getMedal(mmr) {
-    if (mmr >= 1 && mmr <= 769) return { name: "Herald", imgSrc: "https://via.placeholder.com/30x30/ff0000/ffffff?text=H" }; // Herald
-    if (mmr >= 770 && mmr <= 1539) return { name: "Guardian", imgSrc: "https://via.placeholder.com/30x30/00ff00/ffffff?text=G" }; // Guardian
-    if (mmr >= 1540 && mmr <= 2309) return { name: "Crusader", imgSrc: "https://via.placeholder.com/30x30/0000ff/ffffff?text=C" }; // Crusader
-    if (mmr >= 2310 && mmr <= 3079) return { name: "Archon", imgSrc: "https://via.placeholder.com/30x30/ff00ff/ffffff?text=A" }; // Archon
-    if (mmr >= 3080 && mmr <= 3849) return { name: "Legend", imgSrc: "https://via.placeholder.com/30x30/ffff00/ffffff?text=L" }; // Legend
-    if (mmr >= 3850 && mmr <= 4619) return { name: "Ancient", imgSrc: "https://via.placeholder.com/30x30/00ffff/ffffff?text=AN" }; // Ancient
-    if (mmr >= 4620 && mmr <= 5620) return { name: "Divine", imgSrc: "https://via.placeholder.com/30x30/ff9900/ffffff?text=D" }; // Divine
-    return { name: "Immortal", imgSrc: "https://via.placeholder.com/30x30/ff6666/ffffff?text=I" }; // Immortal
-}
+            if (mmr <= 769) return { name: "Herald", imgSrc: "https://via.placeholder.com/30x30/ff0000/ffffff?text=H" }; // Placeholder for Herald image
+            if (mmr <= 1539) return { name: "Guardian", imgSrc: "https://via.placeholder.com/30x30/00ff00/ffffff?text=G" }; // Placeholder for Guardian image
+            if (mmr <= 2309) return { name: "Crusader", imgSrc: "https://via.placeholder.com/30x30/0000ff/ffffff?text=C" }; // Placeholder for Crusader image
+            if (mmr <= 3079) return { name: "Archon", imgSrc: "https://via.placeholder.com/30x30/ff00ff/ffffff?text=A" }; // Placeholder for Archon image
+            if (mmr <= 3849) return { name: "Legend", imgSrc: "https://via.placeholder.com/30x30/ffff00/ffffff?text=L" }; // Placeholder for Legend image
+            if (mmr <= 4619) return { name: "Ancient", imgSrc: "https://via.placeholder.com/30x30/00ffff/ffffff?text=AN" }; // Placeholder for Ancient image
+            if (mmr <= 5620) return { name: "Divine", imgSrc: "https://via.placeholder.com/30x30/ff9900/ffffff?text=D" }; // Placeholder for Divine image
+            return { name: "Immortal", imgSrc: "https://via.placeholder.com/30x30/ff6666/ffffff?text=I" }; // Placeholder for Immortal image
+        }
 
-        // Function to perform the balanced shuffle
+        // Function to perform multiple shuffles and find the best possible minimum difference
         function balancedShuffle() {
-            const totalSum = people.reduce((sum, person) => sum + person.value, 0);
-            const target = Math.floor(totalSum / 2);
+            let bestDifference = Infinity;
+            let bestTeamA = [];
+            let bestTeamB = [];
 
-            // DP array to track achievable sums
-            let dp = Array(target + 1).fill(false);
-            dp[0] = true;  // Base case: zero sum is always achievable
+            // Set number of shuffles to perform
+            const numShuffles = 1000; // You can adjust the number of shuffles
 
-            // Fill DP array with achievable sums
-            for (let person of people) {
-                for (let i = target; i >= person.value; i--) {
-                    dp[i] = dp[i] || dp[i - person.value];
+            for (let i = 0; i < numShuffles; i++) {
+                // Shuffle the people array randomly
+                let shuffledPeople = shuffleArray([...people]);
+
+                // Split shuffled people into two teams
+                let teamA = [];
+                let teamB = [];
+                let teamATotal = 0;
+                let teamBTotal = 0;
+
+                for (let j = 0; j < shuffledPeople.length; j++) {
+                    if (teamATotal < teamBTotal) {
+                        teamA.push(shuffledPeople[j]);
+                        teamATotal += shuffledPeople[j].value;
+                    } else {
+                        teamB.push(shuffledPeople[j]);
+                        teamBTotal += shuffledPeople[j].value;
+                    }
+                }
+
+                // Calculate the difference between the two teams
+                let difference = Math.abs(teamATotal - teamBTotal);
+
+                // If this shuffle is better (smaller difference), update the best teams and difference
+                if (difference < bestDifference) {
+                    bestDifference = difference;
+                    bestTeamA = teamA;
+                    bestTeamB = teamB;
                 }
             }
 
-            // Find the closest sum to the target
-            let closestSum = target;
-            while (closestSum >= 0 && !dp[closestSum]) {
-                closestSum--;
+            // Display the best result after multiple shuffles
+            document.getElementById("teamA").textContent = bestTeamA.map(person => `${person.name}: ${person.value} (${person.medal.name})`).join(", ");
+            document.getElementById("totalA").textContent = bestTeamA.reduce((sum, person) => sum + person.value, 0);
+            document.getElementById("teamB").textContent = bestTeamB.map(person => `${person.name}: ${person.value} (${person.medal.name})`).join(", ");
+            document.getElementById("totalB").textContent = bestTeamB.reduce((sum, person) => sum + person.value, 0);
+            document.getElementById("difference").textContent = bestDifference;
+        }
+
+        // Helper function to shuffle an array
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]]; // Swap elements
             }
-
-            // Backtrack to find the subset that forms the closest sum
-            let subset = [];
-            let remainingSum = closestSum;
-            let remainingPeople = [...people];
-
-            for (let person of remainingPeople.reverse()) {
-                if (remainingSum >= person.value && dp[remainingSum - person.value]) {
-                    subset.push(person);
-                    remainingSum -= person.value;
-                    remainingPeople.splice(remainingPeople.indexOf(person), 1);
-                }
-            }
-
-            // Display the result with names and their totals
-            document.getElementById("teamA").textContent = subset.map(person => `${person.name}: ${person.value} (${person.medal.name})`).join(", ");
-            document.getElementById("totalA").textContent = subset.reduce((sum, person) => sum + person.value, 0);
-            document.getElementById("teamB").textContent = remainingPeople.map(person => `${person.name}: ${person.value} (${person.medal.name})`).join(", ");
-            document.getElementById("totalB").textContent = remainingPeople.reduce((sum, person) => sum + person.value, 0);
-            document.getElementById("difference").textContent = Math.abs(subset.reduce((sum, person) => sum + person.value, 0) - remainingPeople.reduce((sum, person) => sum + person.value, 0));
+            return array;
         }
     </script>
-
 </body>
 </html>
+
 
 
