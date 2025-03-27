@@ -32,10 +32,28 @@
 
         .result {
             margin-top: 20px;
+            display: flex;
+            justify-content: space-between; /* Space the teams across the columns */
         }
 
         .team {
+            width: 45%; /* Each team takes 45% of the space */
+        }
+
+        .team h3 {
             margin-bottom: 10px;
+        }
+
+        .team-list {
+            display: flex;
+            flex-direction: column; /* Display in columns */
+            gap: 10px; /* Add space between each person */
+        }
+
+        .team-member {
+            display: flex;
+            justify-content: space-between; /* Align name and value horizontally */
+            align-items: center;
         }
 
         .input-group {
@@ -58,16 +76,12 @@
 
         .added-persons li {
             padding: 5px;
+            display: flex;
+            align-items: center;
         }
 
         .buttons-container {
             display: inline-block;
-            margin-left: 10px;
-        }
-
-        img.medal {
-            width: 30px;
-            height: 30px;
             margin-left: 10px;
         }
 
@@ -86,6 +100,28 @@
 
         .dark-mode-toggle:hover {
             background-color: #0056b3;
+        }
+
+        /* Ensure text is visible on dark background */
+        body.dark-mode .added-persons li {
+            color: #f8f9fa; /* White text in dark mode */
+        }
+
+        body.dark-mode .team h3, body.dark-mode .result p {
+            color: #f8f9fa; /* White text for team and result */
+        }
+
+        body.light-mode .added-persons li {
+            color: #212529; /* Dark text in light mode */
+        }
+
+        body.light-mode .team h3, body.light-mode .result p {
+            color: #212529; /* Dark text for team and result */
+        }
+
+        /* Styling for the medal name to ensure visibility */
+        .medal-name {
+            font-weight: bold;
         }
     </style>
 </head>
@@ -117,16 +153,17 @@
     <div class="result">
         <div class="team">
             <h3>Team A:</h3>
-            <p id="teamA"></p>
+            <div id="teamA" class="team-list"></div>
             <p>Total: <span id="totalA"></span></p>
         </div>
         <div class="team">
             <h3>Team B:</h3>
-            <p id="teamB"></p>
+            <div id="teamB" class="team-list"></div>
             <p>Total: <span id="totalB"></span></p>
         </div>
-        <p><strong>Difference:</strong> <span id="difference"></span></p>
     </div>
+
+    <p><strong>Difference:</strong> <span id="difference"></span></p>
 
     <script>
         let people = [];
@@ -182,7 +219,7 @@
             }
         }
 
-        // Function to display the list of added people with medals as images
+        // Function to display the list of added people with medals (without pictures)
         function displayAddedPeople() {
             const peopleList = document.getElementById("peopleList");
             peopleList.innerHTML = ''; // Clear the list before adding new items
@@ -191,12 +228,11 @@
             people.forEach((person, index) => {
                 const listItem = document.createElement("li");
                 listItem.textContent = `${person.name} - ${person.value}`;
-                
-                // Add medal image
-                const medalImage = document.createElement("img");
-                medalImage.src = person.medal.imgSrc; // Get the image source
-                medalImage.alt = person.medal.name;
-                medalImage.classList.add("medal");
+
+                // Create medal name text with a specific class for visibility
+                const medalName = document.createElement("span");
+                medalName.classList.add("medal-name");
+                medalName.textContent = ` (${person.medal.name})`;
 
                 // Create the edit and remove buttons
                 const buttonsContainer = document.createElement("div");
@@ -217,7 +253,7 @@
                 buttonsContainer.appendChild(editButton);
                 buttonsContainer.appendChild(removeButton);
 
-                listItem.appendChild(medalImage);
+                listItem.appendChild(medalName); // Add medal name (no image)
                 listItem.appendChild(buttonsContainer);
 
                 peopleList.appendChild(listItem);
@@ -247,14 +283,14 @@
 
         // Function to get the medal based on the person's MMR
         function getMedal(mmr) {
-            if (mmr <= 769) return { name: "Herald", imgSrc: "https://via.placeholder.com/30x30/ff0000/ffffff?text=H" }; // Placeholder for Herald image
-            if (mmr <= 1539) return { name: "Guardian", imgSrc: "https://via.placeholder.com/30x30/00ff00/ffffff?text=G" }; // Placeholder for Guardian image
-            if (mmr <= 2309) return { name: "Crusader", imgSrc: "https://via.placeholder.com/30x30/0000ff/ffffff?text=C" }; // Placeholder for Crusader image
-            if (mmr <= 3079) return { name: "Archon", imgSrc: "https://via.placeholder.com/30x30/ff00ff/ffffff?text=A" }; // Placeholder for Archon image
-            if (mmr <= 3849) return { name: "Legend", imgSrc: "https://via.placeholder.com/30x30/ffff00/ffffff?text=L" }; // Placeholder for Legend image
-            if (mmr <= 4619) return { name: "Ancient", imgSrc: "https://via.placeholder.com/30x30/00ffff/ffffff?text=AN" }; // Placeholder for Ancient image
-            if (mmr <= 5620) return { name: "Divine", imgSrc: "https://via.placeholder.com/30x30/ff9900/ffffff?text=D" }; // Placeholder for Divine image
-            return { name: "Immortal", imgSrc: "https://via.placeholder.com/30x30/ff6666/ffffff?text=I" }; // Placeholder for Immortal image
+            if (mmr <= 769) return { name: "Herald" };
+            if (mmr <= 1539) return { name: "Guardian" };
+            if (mmr <= 2309) return { name: "Crusader" };
+            if (mmr <= 3079) return { name: "Archon" };
+            if (mmr <= 3849) return { name: "Legend" };
+            if (mmr <= 4619) return { name: "Ancient" };
+            if (mmr <= 5620) return { name: "Divine" };
+            return { name: "Immortal" };
         }
 
         // Function to perform multiple shuffles and find the best possible minimum difference
@@ -298,24 +334,50 @@
             }
 
             // Display the best result after multiple shuffles
-            document.getElementById("teamA").textContent = bestTeamA.map(person => `${person.name}: ${person.value} (${person.medal.name})`).join(", ");
-            document.getElementById("totalA").textContent = bestTeamA.reduce((sum, person) => sum + person.value, 0);
-            document.getElementById("teamB").textContent = bestTeamB.map(person => `${person.name}: ${person.value} (${person.medal.name})`).join(", ");
-            document.getElementById("totalB").textContent = bestTeamB.reduce((sum, person) => sum + person.value, 0);
-            document.getElementById("difference").textContent = bestDifference;
+            displayTeams(bestTeamA, bestTeamB, bestDifference);
         }
 
-        // Helper function to shuffle an array
+        // Function to shuffle an array randomly
         function shuffleArray(array) {
             for (let i = array.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]]; // Swap elements
+                [array[i], array[j]] = [array[j], array[i]];
             }
             return array;
+        }
+
+        // Function to display the shuffled teams
+        function displayTeams(teamA, teamB, difference) {
+            const teamAContainer = document.getElementById("teamA");
+            const teamBContainer = document.getElementById("teamB");
+            const totalA = document.getElementById("totalA");
+            const totalB = document.getElementById("totalB");
+            const diffContainer = document.getElementById("difference");
+
+            teamAContainer.innerHTML = '';
+            teamBContainer.innerHTML = '';
+            totalA.textContent = teamA.reduce((sum, person) => sum + person.value, 0);
+            totalB.textContent = teamB.reduce((sum, person) => sum + person.value, 0);
+            diffContainer.textContent = difference;
+
+            // Add members to team A
+            teamA.forEach(person => {
+                const personDiv = document.createElement("div");
+                personDiv.textContent = `${person.name} - ${person.value} (${person.medal.name})`;
+                teamAContainer.appendChild(personDiv);
+            });
+
+            // Add members to team B
+            teamB.forEach(person => {
+                const personDiv = document.createElement("div");
+                personDiv.textContent = `${person.name} - ${person.value} (${person.medal.name})`;
+                teamBContainer.appendChild(personDiv);
+            });
         }
     </script>
 </body>
 </html>
+
 
 
 
